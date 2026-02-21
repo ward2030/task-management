@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// أدوار المستخدمين
+enum Role {
+  ADMIN      // المدير
+  COORDINATOR // المنسق
+  EMPLOYEE   // الموظف
+}
+
+// أقسام العمل
+enum Department {
+  ARCHITECTURAL // معماري
+  ELECTRICAL    // كهرباء
+  CIVIL         // مدني
+  MECHANICAL    // ميكانيكا
+}
+
+// حالات المهمة
+enum TaskStatus {
+  TODO        // قيد الانتظار
+  IN_PROGRESS // قيد التنفيذ
+  IN_REVIEW   // قيد المراجعة
+  DONE        // مكتملة
+}
+
+// أولوية المهمة
+enum Priority {
+  LOW    // منخفضة
+  MEDIUM // متوسطة
+  HIGH   // عالية
+  URGENT // عاجلة
+}
+
+// المستخدمين
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  password     String
+  name         String
+  role         Role     @default(EMPLOYEE)
+  department   Department?
+  avatar       String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // العلاقات
+  createdTasks      Task[]         @relation("CreatedTasks")
+  assignedTasks     Task[]         @relation("AssignedTasks")
+  comments          Comment[]
+  notifications     Notification[]
+  sessions          Session[]
+
+  @@map("users")
+}
+
+// المهام
+model Task {
+  id           String     @id @default(cuid())
+  title        String
+  description  String?
+  status       TaskStatus @default(TODO)
+  priority     Priority   @default(MEDIUM)
+  department   Department
+  dueDate      DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  completedAt  DateTime?
+
+  // العلاقات
+  creatorId    String
+  creator      User       @relation("CreatedTasks", fields: [creatorId], references: [id])
+  assigneeId   String?
+  assignee     User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  comments     Comment[]
+
+  @@map("tasks")
+}
+
+// التعليقات
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // العلاقات
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("comments")
+}
+
+// الإشعارات
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // العلاقات
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// جلسات المستخدمين (للمصادقة)
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("sessions")
+}
