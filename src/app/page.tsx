@@ -213,8 +213,6 @@ export default function LoginPage() {
             </form>
             <div className="mt-6 p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground text-center border">
               <p className="font-medium mb-1">شركة الفهد للتجارة والصناعة والمقاولات:</p>
-              <p className="font-mono bg-background px-3 py-2 rounded mt-2">
-                <p className="font-medium mb-1">مشروع المباني المساندة بحائل:</p>
             </div>
           </CardContent>
         </Card>
