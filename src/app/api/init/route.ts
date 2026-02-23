@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { createHash } from 'crypto';
 
 export async function GET() {
   const prisma = new PrismaClient();
@@ -10,6 +10,7 @@ export async function GET() {
     const usersCount = await prisma.user.count();
 
     if (usersCount > 0) {
+      await prisma.$disconnect();
       return NextResponse.json({
         status: 'success',
         message: 'النظام مُهيأ بالفعل',
@@ -17,7 +18,8 @@ export async function GET() {
       });
     }
 
-    const hashedPassword = bcrypt.hashSync('admin123', 10);
+    // تشفير كلمة المرور بنفس طريقة auth.ts (sha256)
+    const hashedPassword = createHash('sha256').update('admin123').digest('hex');
 
     await prisma.user.create({
       data: {
@@ -28,17 +30,21 @@ export async function GET() {
       },
     });
 
+    await prisma.$disconnect();
+
     return NextResponse.json({
       status: 'success',
       message: 'تم إنشاء حساب المدير! ✅',
-      admin: { username: 'admin', password: 'admin123' }
+      admin: {
+        username: 'admin',
+        password: 'admin123'
+      }
     });
   } catch (error) {
+    await prisma.$disconnect();
     return NextResponse.json({
       status: 'error',
       error: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }
