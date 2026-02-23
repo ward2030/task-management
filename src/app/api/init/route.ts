@@ -1,51 +1,44 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { hashPassword } from '@/lib/auth';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
-// تهيئة النظام - إنشاء مستخدم مدير افتراضي
 export async function GET() {
+  const prisma = new PrismaClient();
+  
   try {
-    // التحقق من وجود مستخدمين
-    const usersCount = await db.user.count();
+    await prisma.$connect();
+    const usersCount = await prisma.user.count();
 
     if (usersCount > 0) {
       return NextResponse.json({
-        initialized: true,
+        status: 'success',
         message: 'النظام مُهيأ بالفعل',
+        usersCount: usersCount
       });
     }
 
-    // إنشاء مستخدم مدير افتراضي
-    const hashedPassword = hashPassword('admin123');
+    const hashedPassword = bcrypt.hashSync('admin123', 10);
 
-    const admin = await db.user.create({
+    await prisma.user.create({
       data: {
         username: 'admin',
         password: hashedPassword,
         name: 'المدير العام',
         role: 'ADMIN',
       },
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        role: true,
-      },
     });
 
     return NextResponse.json({
-      initialized: true,
-      message: 'تم إنشاء حساب المدير الافتراضي',
-      admin: {
-        username: 'admin',
-        password: 'admin123',
-      },
+      status: 'success',
+      message: 'تم إنشاء حساب المدير! ✅',
+      admin: { username: 'admin', password: 'admin123' }
     });
   } catch (error) {
-    console.error('Init error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ أثناء تهيئة النظام' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }
