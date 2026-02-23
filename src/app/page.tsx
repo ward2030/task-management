@@ -212,9 +212,9 @@ export default function LoginPage() {
               </Button>
             </form>
             <div className="mt-6 p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground text-center border">
-              <p className="font-medium mb-1">بيانات الدخول الافتراضية:</p>
+              <p className="font-medium mb-1">شركة الفهد للتجارة والصناعة والمقاولات:</p>
               <p className="font-mono bg-background px-3 py-2 rounded mt-2">
-                <span className="text-primary">admin</span> / <span className="text-primary">admin123</span>
+                <span className="text-primary">مشروع المباني المساندة بحائل>
               </p>
             </div>
           </CardContent>
