@@ -12,9 +12,10 @@ datasource db {
 
 // أدوار المستخدمين
 enum Role {
-  ADMIN      // المدير
-  COORDINATOR // المنسق
-  EMPLOYEE   // الموظف
+  ADMIN           // المدير
+  COORDINATOR     // المنسق
+  DEPARTMENT_MANAGER // مدير القسم
+  EMPLOYEE        // الموظف
 }
 
 // أقسام العمل
