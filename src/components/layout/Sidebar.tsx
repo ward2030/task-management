@@ -28,12 +28,12 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: 'backlog' as const, label: 'الباكلوج', icon: ListTodo, roles: ['ADMIN', 'COORDINATOR', 'EMPLOYEE'] },
-  { id: 'kanban' as const, label: 'الكانبان', icon: KanbanSquare, roles: ['ADMIN', 'COORDINATOR', 'EMPLOYEE'] },
-  { id: 'calendar' as const, label: 'التقويم', icon: CalendarIcon, roles: ['ADMIN', 'COORDINATOR', 'EMPLOYEE'] },
-  { id: 'reports' as const, label: 'التقارير', icon: BarChart3, roles: ['ADMIN', 'COORDINATOR'] },
-  { id: 'users' as const, label: 'المستخدمين', icon: Users, roles: ['ADMIN', 'COORDINATOR'] },
-  { id: 'settings' as const, label: 'الإعدادات', icon: Settings, roles: ['ADMIN', 'COORDINATOR', 'EMPLOYEE'] },
+  { id: 'backlog' as const, label: 'الباكلوج', icon: ListTodo, roles: ['ADMIN', 'COORDINATOR', 'DEPARTMENT_MANAGER', 'EMPLOYEE'] },
+  { id: 'kanban' as const, label: 'الكانبان', icon: KanbanSquare, roles: ['ADMIN', 'COORDINATOR', 'DEPARTMENT_MANAGER', 'EMPLOYEE'] },
+  { id: 'calendar' as const, label: 'التقويم', icon: CalendarIcon, roles: ['ADMIN', 'COORDINATOR', 'DEPARTMENT_MANAGER', 'EMPLOYEE'] },
+  { id: 'reports' as const, label: 'التقارير', icon: BarChart3, roles: ['ADMIN', 'COORDINATOR', 'DEPARTMENT_MANAGER'] },
+  { id: 'users' as const, label: 'المستخدمين', icon: Users, roles: ['ADMIN', 'COORDINATOR', 'DEPARTMENT_MANAGER'] },
+  { id: 'settings' as const, label: 'الإعدادات', icon: Settings, roles: ['ADMIN', 'COORDINATOR', 'DEPARTMENT_MANAGER', 'EMPLOYEE'] },
 ];
 
 export default function Sidebar({ collapsed, onCollapse }: SidebarProps) {
@@ -136,7 +136,7 @@ export default function Sidebar({ collapsed, onCollapse }: SidebarProps) {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{user.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {user.role === 'ADMIN' ? 'مدير' : user.role === 'COORDINATOR' ? 'منسق' : 'موظف'}
+                  {user.role === 'ADMIN' ? 'مدير' : user.role === 'COORDINATOR' ? 'منسق' : user.role === 'DEPARTMENT_MANAGER' ? 'مدير قسم' : 'موظف'}
                 </p>
               </div>
             </div>
