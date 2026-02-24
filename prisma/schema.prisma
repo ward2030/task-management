@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL", "postgresql://localhost:5432/temp")
+  provider = "sqlite"
+  url      = "file:./data.db"
 }
 
 // أدوار المستخدمين
