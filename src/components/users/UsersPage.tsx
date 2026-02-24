@@ -56,8 +56,10 @@ export default function UsersPage() {
 
   // هل المستخدم الحالي مدير؟
   const isAdmin = currentUser?.role === 'ADMIN';
-  // هل المستخدم الحالي مدير أو منسق؟
-  const isAdminOrCoordinator = currentUser?.role === 'ADMIN' || currentUser?.role === 'COORDINATOR';
+  // هل المستخدم الحالي مدير أو منسق أو مدير قسم؟
+  const canManageUsers = currentUser?.role === 'ADMIN' || 
+                         currentUser?.role === 'COORDINATOR' || 
+                         currentUser?.role === 'DEPARTMENT_MANAGER';
 
   // فتح نافذة الإضافة
   const handleAdd = () => {
@@ -221,6 +223,7 @@ export default function UsersPage() {
             <Shield className="h-4 w-4" />
             <span>
               {isAdmin ? 'بصفتك مدير: يمكنك إضافة وتعديل وحذف المستخدمين' : 
+               currentUser?.role === 'DEPARTMENT_MANAGER' ? 'بصفتك مدير قسم: يمكنك تعديل بيانات المستخدمين' :
                'بصفتك منسق: يمكنك تعديل بيانات المستخدمين'}
             </span>
           </div>
@@ -283,8 +286,8 @@ export default function UsersPage() {
                     <TableCell>{user.createdAt ? formatDate(user.createdAt) : '-'}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {/* تعديل - للمدير والمنسق */}
-                        {isAdminOrCoordinator && (
+                        {/* تعديل - للمدير والمنسق ومدير القسم */}
+                        {canManageUsers && (
                           <Button
                             variant="ghost"
                             size="icon"
