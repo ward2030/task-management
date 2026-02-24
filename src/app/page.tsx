@@ -162,7 +162,7 @@ export default function LoginPage() {
               <CheckSquare className="h-8 w-8 text-primary-foreground" />
             </div>
             <div>
-              <CardTitle className="text-2xl">نظام إدارة المهام</CardTitle>
+              <CardTitle className="text-2xl">نظام إدارة المهام لمشروع المباني المساندة بحائل</CardTitle>
               <CardDescription className="mt-2">
                 قم بتسجيل الدخول للوصول إلى لوحة التحكم
               </CardDescription>
@@ -212,7 +212,7 @@ export default function LoginPage() {
               </Button>
             </form>
             <div className="mt-6 p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground text-center border">
-              <p className="font-medium mb-1">شركة الفهد للتجارة والصناعة والمقاولات:</p>
+              <p className="font-medium mb-1">شركة الفهد للتجارة والصناعة والمقاولات</p>
             </div>
           </CardContent>
         </Card>
