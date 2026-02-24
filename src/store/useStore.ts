@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 // أنواع البيانات
-export type Role = 'ADMIN' | 'COORDINATOR' | 'EMPLOYEE';
+export type Role = 'ADMIN' | 'COORDINATOR' | 'DEPARTMENT_MANAGER' | 'EMPLOYEE';
 export type Department = 'ARCHITECTURAL' | 'ELECTRICAL' | 'CIVIL' | 'MECHANICAL';
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'DONE';
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
@@ -126,6 +126,7 @@ export const useStore = create<AppState>((set) => ({
 export const roleLabels: Record<Role, string> = {
   ADMIN: 'مدير',
   COORDINATOR: 'منسق',
+  DEPARTMENT_MANAGER: 'مدير قسم',
   EMPLOYEE: 'موظف',
 };
 
