@@ -111,7 +111,7 @@ export default function LoginPage() {
 
   // صفحة تسجيل الدخول مع خلفية السماء والغيوم
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* خلفية السماء */}
       <div className="absolute inset-0 bg-gradient-to-b from-sky-300 via-sky-400 to-blue-500">
         {/* الشمس */}
@@ -121,15 +121,10 @@ export default function LoginPage() {
 
         {/* الغيوم المتحركة */}
         <div className="absolute inset-0 overflow-hidden">
-          {/* غيمة 1 */}
           <div className="cloud cloud-1"></div>
-          {/* غيمة 2 */}
           <div className="cloud cloud-2"></div>
-          {/* غيمة 3 */}
           <div className="cloud cloud-3"></div>
-          {/* غيمة 4 */}
           <div className="cloud cloud-4"></div>
-          {/* غيمة 5 */}
           <div className="cloud cloud-5"></div>
         </div>
 
@@ -143,75 +138,84 @@ export default function LoginPage() {
       </div>
 
       {/* محتوى الصفحة */}
-      {isCheckingAuth && !showLoginForm ? (
-        // شاشة التحميل
-        <div className="flex flex-col items-center gap-4 relative z-10">
-          <div className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
-            <CheckSquare className="h-8 w-8 text-sky-600" />
+      <div className="flex-1 flex items-center justify-center w-full">
+        {isCheckingAuth && !showLoginForm ? (
+          // شاشة التحميل
+          <div className="flex flex-col items-center gap-4 relative z-10">
+            <div className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
+              <CheckSquare className="h-8 w-8 text-sky-600" />
+            </div>
+            <Loader2 className="h-6 w-6 animate-spin text-white" />
+            <p className="text-white font-medium">جاري التحميل...</p>
           </div>
-          <Loader2 className="h-6 w-6 animate-spin text-white" />
-          <p className="text-white font-medium">جاري التحميل...</p>
-        </div>
-      ) : (
-        // نموذج تسجيل الدخول
-        <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm relative z-10">
-          <CardHeader className="text-center space-y-4 pb-2">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-sky-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
-              <CheckSquare className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-2xl text-gray-800">نظام إدارة المهام</CardTitle>
-              <CardDescription className="mt-2 text-gray-600">
-                قم بتسجيل الدخول للوصول إلى لوحة التحكم
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-gray-700">اسم المستخدم</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="أدخل اسم المستخدم"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  className="text-right h-11 bg-gray-50 border-gray-200 focus:border-sky-400 focus:ring-sky-400"
-                  dir="rtl"
-                  autoFocus
-                />
+        ) : (
+          // نموذج تسجيل الدخول
+          <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm relative z-10">
+            <CardHeader className="text-center space-y-4 pb-2">
+              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-sky-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <CheckSquare className="h-8 w-8 text-white" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-700">كلمة المرور</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="أدخل كلمة المرور"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="text-right h-11 bg-gray-50 border-gray-200 focus:border-sky-400 focus:ring-sky-400"
-                  dir="rtl"
-                />
+              <div>
+                <CardTitle className="text-2xl text-gray-800">نظام إدارة المهام</CardTitle>
+                <CardDescription className="mt-2 text-gray-600">
+                  قم بتسجيل الدخول للوصول إلى لوحة التحكم
+                </CardDescription>
               </div>
-              <Button type="submit" className="w-full h-11 bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 text-white shadow-lg" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>جاري تسجيل الدخول...</span>
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="h-4 w-4" />
-                    <span>تسجيل الدخول</span>
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+            </CardHeader>
+            <CardContent className="pt-4">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-gray-700">اسم المستخدم</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="أدخل اسم المستخدم"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    className="text-right h-11 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-sky-400 focus:ring-sky-400"
+                    dir="rtl"
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-gray-700">كلمة المرور</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="أدخل كلمة المرور"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="text-right h-11 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-sky-400 focus:ring-sky-400"
+                    dir="rtl"
+                  />
+                </div>
+                <Button type="submit" className="w-full h-11 bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 text-white shadow-lg" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>جاري تسجيل الدخول...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="h-4 w-4" />
+                      <span>تسجيل الدخول</span>
+                    </>
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* اسم الشركة في الأسفل */}
+      <div className="relative z-10 pb-6 text-center">
+        <h2 className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">
+          شركة الفهد للتجارة والصناعة والمقاولات
+        </h2>
+      </div>
 
       {/* أنماط CSS للحركة */}
       <style jsx>{`
@@ -231,7 +235,6 @@ export default function LoginPage() {
           border-radius: 50%;
         }
         
-        /* غيمة 1 - كبيرة وبطيئة */
         .cloud-1 {
           width: 200px;
           height: 60px;
@@ -251,7 +254,6 @@ export default function LoginPage() {
           right: 30px;
         }
         
-        /* غيمة 2 - متوسطة */
         .cloud-2 {
           width: 150px;
           height: 45px;
@@ -272,7 +274,6 @@ export default function LoginPage() {
           right: 25px;
         }
         
-        /* غيمة 3 - صغيرة وسريعة */
         .cloud-3 {
           width: 100px;
           height: 35px;
@@ -294,7 +295,6 @@ export default function LoginPage() {
           right: 15px;
         }
         
-        /* غيمة 4 - متوسطة عالية */
         .cloud-4 {
           width: 180px;
           height: 50px;
@@ -316,7 +316,6 @@ export default function LoginPage() {
           right: 25px;
         }
         
-        /* غيمة 5 - صغيرة منخفضة */
         .cloud-5 {
           width: 120px;
           height: 40px;
@@ -338,7 +337,6 @@ export default function LoginPage() {
           right: 20px;
         }
         
-        /* حركة الغيوم */
         @keyframes float-cloud {
           0% {
             left: -250px;
@@ -348,7 +346,6 @@ export default function LoginPage() {
           }
         }
         
-        /* الطيور */
         .bird {
           width: 10px;
           height: 5px;
