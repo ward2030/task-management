@@ -20,18 +20,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Calendar, MoreVertical, Edit, Trash2, User, Search, Filter } from 'lucide-react';
+import { Calendar, MoreVertical, Edit, Trash2, User, Search, Filter, Archive, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function BacklogPage() {
-  const { tasks, setEditingTask, setIsTaskModalOpen, deleteTask, user, users } = useStore();
+  const { tasks, setEditingTask, setIsTaskModalOpen, deleteTask, updateTask, user, users } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
 
+  // تصفية المهام (استبعاد المؤرشفة)
+  const activeTasks = tasks.filter(t => !t.isArchived);
+
   // تصفية المهام
-  const filteredTasks = tasks.filter((task) => {
+  const filteredTasks = activeTasks.filter((task) => {
     const matchesSearch =
       task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       task.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -54,6 +57,28 @@ export default function BacklogPage() {
 
       deleteTask(taskId);
       toast.success('تم حذف المهمة بنجاح');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ');
+    }
+  };
+
+  // أرشفة المهمة
+  const handleArchive = async (taskId: string) => {
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          isArchived: true,
+          archivedAt: new Date().toISOString()
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error);
+
+      updateTask(data.task);
+      toast.success('تم أرشفة المهمة');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'حدث خطأ');
     }
@@ -226,9 +251,17 @@ export default function BacklogPage() {
                             }}
                           >
                             <Edit className="h-4 w-4 ml-2" />
-                            تعديل
+                            عرض/تعديل
                           </DropdownMenuItem>
                           {user?.role !== 'EMPLOYEE' && (
+                            <DropdownMenuItem
+                              onClick={() => handleArchive(task.id)}
+                            >
+                              <Archive className="h-4 w-4 ml-2" />
+                              أرشفة
+                            </DropdownMenuItem>
+                          )}
+                          {user?.role === 'ADMIN' && (
                             <DropdownMenuItem
                               onClick={() => handleDelete(task.id)}
                               className="text-destructive"
