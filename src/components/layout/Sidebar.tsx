@@ -20,6 +20,9 @@ import {
   ChevronRight,
   ChevronLeft,
   CheckSquare,
+  History,
+  MessageSquare,
+  Archive,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -33,11 +36,14 @@ const menuItems = [
   { id: 'calendar' as const, label: 'التقويم', icon: CalendarIcon, roles: ['ADMIN', 'COORDINATOR', 'DEPARTMENT_MANAGER', 'EMPLOYEE'] },
   { id: 'reports' as const, label: 'التقارير', icon: BarChart3, roles: ['ADMIN', 'COORDINATOR', 'DEPARTMENT_MANAGER'] },
   { id: 'users' as const, label: 'المستخدمين', icon: Users, roles: ['ADMIN', 'COORDINATOR', 'DEPARTMENT_MANAGER'] },
+  { id: 'activity' as const, label: 'سجل النشاط', icon: History, roles: ['ADMIN', 'COORDINATOR', 'DEPARTMENT_MANAGER'] },
+  { id: 'chat' as const, label: 'المحادثات', icon: MessageSquare, roles: ['ADMIN', 'COORDINATOR', 'DEPARTMENT_MANAGER', 'EMPLOYEE'] },
+  { id: 'archive' as const, label: 'الأرشيف', icon: Archive, roles: ['ADMIN', 'COORDINATOR', 'DEPARTMENT_MANAGER'] },
   { id: 'settings' as const, label: 'الإعدادات', icon: Settings, roles: ['ADMIN', 'COORDINATOR', 'DEPARTMENT_MANAGER', 'EMPLOYEE'] },
 ];
 
 export default function Sidebar({ collapsed, onCollapse }: SidebarProps) {
-  const { currentPage, setCurrentPage, user } = useStore();
+  const { currentPage, setCurrentPage, user, unreadMessages } = useStore();
 
   // تصفية العناصر حسب دور المستخدم
   const filteredMenuItems = menuItems.filter((item) => {
@@ -92,11 +98,16 @@ export default function Sidebar({ collapsed, onCollapse }: SidebarProps) {
                         size="icon"
                         onClick={() => setCurrentPage(item.id)}
                         className={cn(
-                          'w-full h-10',
+                          'w-full h-10 relative',
                           isActive && 'bg-primary/10 text-primary'
                         )}
                       >
                         <Icon className="h-5 w-5" />
+                        {item.id === 'chat' && unreadMessages > 0 && (
+                          <span className="absolute -top-1 -left-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                            {unreadMessages}
+                          </span>
+                        )}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="left">
@@ -112,12 +123,17 @@ export default function Sidebar({ collapsed, onCollapse }: SidebarProps) {
                   variant={isActive ? 'secondary' : 'ghost'}
                   onClick={() => setCurrentPage(item.id)}
                   className={cn(
-                    'w-full justify-start gap-3 h-10',
+                    'w-full justify-start gap-3 h-10 relative',
                     isActive && 'bg-primary/10 text-primary font-medium'
                   )}
                 >
                   <Icon className="h-5 w-5" />
                   <span>{item.label}</span>
+                  {item.id === 'chat' && unreadMessages > 0 && (
+                    <span className="mr-auto w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                      {unreadMessages}
+                    </span>
+                  )}
                 </Button>
               );
             })}
