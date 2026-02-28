@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
 }
 
 // أدوار المستخدمين
@@ -61,6 +61,10 @@ model User {
   comments          Comment[]
   notifications     Notification[]
   sessions          Session[]
+  activities        Activity[]
+  sentMessages      Message[]      @relation("SentMessages")
+  receivedMessages  Message[]      @relation("ReceivedMessages")
+  ratings           TaskRating[]
 
   @@map("users")
 }
@@ -77,6 +81,8 @@ model Task {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   completedAt  DateTime?
+  isArchived   Boolean    @default(false)
+  archivedAt   DateTime?
 
   // العلاقات
   creatorId    String
@@ -84,6 +90,8 @@ model Task {
   assigneeId   String?
   assignee     User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
   comments     Comment[]
+  activities   Activity[]
+  ratings      TaskRating[]
 
   @@map("tasks")
 }
@@ -129,4 +137,53 @@ model Session {
   createdAt DateTime @default(now())
 
   @@map("sessions")
+}
+
+// سجل النشاط
+model Activity {
+  id        String   @id @default(cuid())
+  action    String   // CREATE, UPDATE, DELETE, STATUS_CHANGE, COMMENT, ASSIGN
+  details   String?  // تفاصيل إضافية
+  createdAt DateTime @default(now())
+
+  // العلاقات
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@map("activities")
+}
+
+// الرسائل (المحادثات)
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // العلاقات
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@map("messages")
+}
+
+// تقييم المهام
+model TaskRating {
+  id        String   @id @default(cuid())
+  rating    Int      // من 1 إلى 5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  // العلاقات
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([taskId, userId]) // كل مستخدم يقيم المهمة مرة واحدة
+  @@map("task_ratings")
 }
