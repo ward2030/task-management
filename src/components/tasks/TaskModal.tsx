@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useStore, departmentLabels, priorityLabels, statusLabels, type Task, type Priority, type TaskStatus, type Department, type Comment } from '@/store/useStore';
+import { useStore, departmentLabels, priorityLabels, statusLabels, type Task, type Priority, type TaskStatus, type Department, type Comment, type TaskRating } from '@/store/useStore';
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MessageSquare, Send, Loader2, X } from 'lucide-react';
+import { MessageSquare, Send, Loader2, X, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -39,6 +39,13 @@ export default function TaskModal({ open, onOpenChange, task }: TaskModalProps) 
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isSavingComment, setIsSavingComment] = useState(false);
+  
+  // حالة التقييم
+  const [ratings, setRatings] = useState<TaskRating[]>([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [userRating, setUserRating] = useState(0);
+  const [ratingComment, setRatingComment] = useState('');
+  const [isSavingRating, setIsSavingRating] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -63,6 +70,16 @@ export default function TaskModal({ open, onOpenChange, task }: TaskModalProps) 
         assigneeId: task.assigneeId || '',
       });
       setComments(task.comments || []);
+      setRatings(task.ratings || []);
+      // حساب متوسط التقييم
+      if (task.ratings && task.ratings.length > 0) {
+        setAvgRating(task.ratings.reduce((sum, r) => sum + r.rating, 0) / task.ratings.length);
+        const existingRating = task.ratings.find(r => r.user.id === user?.id);
+        if (existingRating) {
+          setUserRating(existingRating.rating);
+          setRatingComment(existingRating.comment || '');
+        }
+      }
     } else {
       setFormData({
         title: '',
@@ -74,9 +91,13 @@ export default function TaskModal({ open, onOpenChange, task }: TaskModalProps) 
         assigneeId: '',
       });
       setComments([]);
+      setRatings([]);
+      setAvgRating(0);
+      setUserRating(0);
+      setRatingComment('');
       setShowComments(false);
     }
-  }, [task]);
+  }, [task, user?.id]);
 
   // جلب التعليقات عند فتح قسم التعليقات
   useEffect(() => {
@@ -100,6 +121,21 @@ export default function TaskModal({ open, onOpenChange, task }: TaskModalProps) 
       console.error('Error fetching comments:', error);
     } finally {
       setIsLoadingComments(false);
+    }
+  };
+
+  // جلب التقييمات
+  const fetchRatings = async () => {
+    if (!task) return;
+    try {
+      const res = await fetch(`/api/ratings?taskId=${task.id}`);
+      const data = await res.json();
+      if (res.ok) {
+        setRatings(data.ratings || []);
+        setAvgRating(data.avgRating || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching ratings:', error);
     }
   };
 
@@ -183,6 +219,35 @@ export default function TaskModal({ open, onOpenChange, task }: TaskModalProps) 
       toast.error(error instanceof Error ? error.message : 'حدث خطأ أثناء حفظ التعليق');
     } finally {
       setIsSavingComment(false);
+    }
+  };
+
+  // إرسال التقييم
+  const handleSubmitRating = async () => {
+    if (!task || userRating === 0) return;
+
+    setIsSavingRating(true);
+    try {
+      const res = await fetch('/api/ratings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId: task.id,
+          rating: userRating,
+          comment: ratingComment || null,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error);
+
+      toast.success('تم حفظ التقييم');
+      fetchRatings();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ');
+    } finally {
+      setIsSavingRating(false);
     }
   };
 
@@ -418,6 +483,100 @@ export default function TaskModal({ open, onOpenChange, task }: TaskModalProps) 
               <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
                 <p><strong>أنشأها:</strong> {task.creator.name}</p>
                 <p><strong>تاريخ الإنشاء:</strong> {formatDate(task.createdAt)}</p>
+              </div>
+            )}
+
+            {/* قسم التقييم */}
+            {task && task.status === 'DONE' && (
+              <div className="border rounded-lg p-4 bg-yellow-50 dark:bg-yellow-900/20">
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <Star className="h-5 w-5 text-yellow-500" />
+                  تقييم المهمة
+                </h4>
+                
+                {/* متوسط التقييم */}
+                {avgRating > 0 && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-sm text-muted-foreground">متوسط التقييم:</span>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`h-5 w-5 ${star <= Math.round(avgRating) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
+                        />
+                      ))}
+                      <span className="text-sm font-medium mr-1">{avgRating.toFixed(1)}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* تقييم المستخدم */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">تقييمك:</span>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setUserRating(star)}
+                          className="focus:outline-none"
+                        >
+                          <Star
+                            className={`h-6 w-6 transition-colors ${
+                              star <= userRating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <Textarea
+                    placeholder="تعليقك على المهمة (اختياري)..."
+                    value={ratingComment}
+                    onChange={(e) => setRatingComment(e.target.value)}
+                    className="min-h-[60px] resize-none"
+                    rows={2}
+                  />
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSubmitRating}
+                    disabled={userRating === 0 || isSavingRating}
+                  >
+                    {isSavingRating ? (
+                      <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                    ) : (
+                      <Star className="h-4 w-4 ml-2" />
+                    )}
+                    حفظ التقييم
+                  </Button>
+                </div>
+
+                {/* عرض التقييمات */}
+                {ratings.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm font-medium">التقييمات:</p>
+                    {ratings.map((r) => (
+                      <div key={r.id} className="flex items-start gap-2 text-sm">
+                        <div className="flex items-center">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-3 w-3 ${star <= r.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
+                            />
+                          ))}
+                        </div>
+                        <span className="font-medium">{r.user.name}</span>
+                        {r.comment && (
+                          <span className="text-muted-foreground">- {r.comment}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
