@@ -39,9 +39,12 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
   completedAt?: string | null;
+  isArchived?: boolean;
+  archivedAt?: string | null;
   creator: User;
   assignee?: User | null;
   comments?: Comment[];
+  ratings?: TaskRating[];
 }
 
 export interface Notification {
@@ -51,6 +54,37 @@ export interface Notification {
   isRead: boolean;
   createdAt: string;
 }
+
+export interface Activity {
+  id: string;
+  action: string;
+  details?: string | null;
+  createdAt: string;
+  user: User;
+  task?: {
+    id: string;
+    title: string;
+  } | null;
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+  sender: User;
+  receiverId: string;
+}
+
+export interface TaskRating {
+  id: string;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+  user: User;
+}
+
+export type PageType = 'backlog' | 'kanban' | 'calendar' | 'reports' | 'users' | 'settings' | 'activity' | 'chat' | 'archive';
 
 interface AppState {
   // المستخدم الحالي
@@ -74,9 +108,21 @@ interface AppState {
   unreadCount: number;
   setUnreadCount: (count: number) => void;
 
+  // سجل النشاط
+  activities: Activity[];
+  setActivities: (activities: Activity[]) => void;
+  addActivity: (activity: Activity) => void;
+
+  // الرسائل
+  messages: Message[];
+  setMessages: (messages: Message[]) => void;
+  addMessage: (message: Message) => void;
+  unreadMessages: number;
+  setUnreadMessages: (count: number) => void;
+
   // الصفحة الحالية
-  currentPage: 'backlog' | 'kanban' | 'calendar' | 'reports' | 'users' | 'settings';
-  setCurrentPage: (page: 'backlog' | 'kanban' | 'calendar' | 'reports' | 'users' | 'settings') => void;
+  currentPage: PageType;
+  setCurrentPage: (page: PageType) => void;
 
   // نافذة المهمة
   isTaskModalOpen: boolean;
@@ -110,6 +156,18 @@ export const useStore = create<AppState>((set) => ({
   setNotifications: (notifications) => set({ notifications }),
   unreadCount: 0,
   setUnreadCount: (count) => set({ unreadCount: count }),
+
+  // سجل النشاط
+  activities: [],
+  setActivities: (activities) => set({ activities }),
+  addActivity: (activity) => set((state) => ({ activities: [activity, ...state.activities] })),
+
+  // الرسائل
+  messages: [],
+  setMessages: (messages) => set({ messages }),
+  addMessage: (message) => set((state) => ({ messages: [message, ...state.messages] })),
+  unreadMessages: 0,
+  setUnreadMessages: (count) => set({ unreadMessages: count }),
 
   // الصفحة الحالية
   currentPage: 'kanban',
@@ -168,4 +226,16 @@ export const statusColors: Record<TaskStatus, string> = {
   IN_PROGRESS: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
   IN_REVIEW: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
   DONE: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+};
+
+// ترجمات أنواع النشاط
+export const activityLabels: Record<string, string> = {
+  CREATE: 'إنشاء مهمة',
+  UPDATE: 'تعديل مهمة',
+  DELETE: 'حذف مهمة',
+  STATUS_CHANGE: 'تغيير الحالة',
+  COMMENT: 'إضافة تعليق',
+  ASSIGN: 'إسناد مهمة',
+  ARCHIVE: 'أرشفة مهمة',
+  RATING: 'تقييم مهمة',
 };
