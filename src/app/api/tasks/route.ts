@@ -12,12 +12,46 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const archived = searchParams.get('archived');
+  const department = searchParams.get('department');
+  const type = searchParams.get('type');
+  const dependency = searchParams.get('dependency');
+  const priority = searchParams.get('priority');
+  const assigneeId = searchParams.get('assigneeId');
 
-  const where: { isArchived?: boolean } = {};
+  const where: Record<string, unknown> = {};
   
   // إذا كان يطلب المهام المؤرشفة فقط
   if (archived === 'true') {
     where.isArchived = true;
+  }
+
+  // فلترة حسب القسم
+  if (department && department !== 'all') {
+    where.department = department;
+  }
+
+  // فلترة حسب النوع
+  if (type && type !== 'all') {
+    where.type = type;
+  }
+
+  // فلترة حسب التبعية
+  if (dependency && dependency !== 'all') {
+    where.dependency = dependency;
+  }
+
+  // فلترة حسب الأولوية
+  if (priority && priority !== 'all') {
+    where.priority = priority;
+  }
+
+  // فلترة حسب المسند إليه
+  if (assigneeId && assigneeId !== 'all') {
+    if (assigneeId === 'unassigned') {
+      where.assigneeId = null;
+    } else {
+      where.assigneeId = assigneeId;
+    }
   }
 
   const tasks = await db.task.findMany({
@@ -57,7 +91,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, description, status, priority, department, dueDate, assigneeId } = body;
+    const { title, description, status, priority, department, type, dependency, dueDate, assigneeId } = body;
 
     if (!title || !department) {
       return NextResponse.json(
@@ -73,6 +107,8 @@ export async function POST(request: NextRequest) {
         status: status || 'TODO',
         priority: priority || 'MEDIUM',
         department,
+        type: type || 'PLANS',
+        dependency: dependency || 'TECHNICAL_OFFICE',
         dueDate: dueDate ? new Date(dueDate) : null,
         creatorId: user.id,
         assigneeId: assigneeId || null,
