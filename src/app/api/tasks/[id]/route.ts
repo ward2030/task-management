@@ -60,7 +60,7 @@ export async function PUT(
   try {
     const body = await request.json();
     const { 
-      title, description, status, priority, department, 
+      title, description, status, priority, department, type, dependency,
       dueDate, assigneeId, isArchived, archivedAt 
     } = body;
 
@@ -99,6 +99,8 @@ export async function PUT(
     }
     if (priority !== undefined) updateData.priority = priority;
     if (department !== undefined) updateData.department = department;
+    if (type !== undefined) updateData.type = type;
+    if (dependency !== undefined) updateData.dependency = dependency;
     if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null;
     if (assigneeId !== undefined) {
       updateData.assigneeId = assigneeId || null;
