@@ -1,11 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { useStore, statusLabels, priorityLabels, departmentLabels, priorityColors, type Task, type TaskStatus } from '@/store/useStore';
+import { useState, useMemo } from 'react';
+import { useStore, statusLabels, priorityLabels, departmentLabels, priorityColors, taskTypeLabels, taskTypeColors, dependencyLabels, dependencyColors, type Task, type TaskStatus, type Department, type TaskType, type Dependency, type Priority } from '@/store/useStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   DndContext,
   DragEndEvent,
@@ -19,7 +28,7 @@ import {
 } from '@dnd-kit/core';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, MessageSquare } from 'lucide-react';
+import { GripVertical, MessageSquare, Search, Filter, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 const columns: { id: TaskStatus; title: string; color: string }[] = [
@@ -103,6 +112,16 @@ function TaskCard({ task, onClick }: TaskCardProps) {
           <Badge className={`text-xs ${priorityColors[task.priority]}`}>
             {priorityLabels[task.priority]}
           </Badge>
+          {task.type && (
+            <Badge className={`text-xs ${taskTypeColors[task.type]}`}>
+              {taskTypeLabels[task.type]}
+            </Badge>
+          )}
+          {task.dependency && (
+            <Badge className={`text-xs ${dependencyColors[task.dependency]}`}>
+              {dependencyLabels[task.dependency]}
+            </Badge>
+          )}
         </div>
 
         {/* معلومات إضافية */}
@@ -192,8 +211,17 @@ function DroppableColumn({ column, tasks, onTaskClick }: DroppableColumnProps) {
 }
 
 export default function KanbanPage() {
-  const { tasks, updateTask, setEditingTask, setIsTaskModalOpen } = useStore();
+  const { tasks, updateTask, setEditingTask, setIsTaskModalOpen, users, user: currentUser } = useStore();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  
+  // حالات الفلترة
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState<string>('all');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterDependency, setFilterDependency] = useState<string>('all');
+  const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [filterAssignee, setFilterAssignee] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -203,15 +231,73 @@ export default function KanbanPage() {
     })
   );
 
+  // تصفية المستخدمين النشطين
+  const activeUsers = users.filter(u => u.isActive !== false);
+
+  // تطبيق الفلاتر
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(task => {
+      // استبعاد المهام المؤرشفة
+      if (task.isArchived) return false;
+
+      // البحث
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = 
+          task.title.toLowerCase().includes(query) ||
+          (task.description?.toLowerCase().includes(query)) ||
+          (task.assignee?.name.toLowerCase().includes(query));
+        if (!matchesSearch) return false;
+      }
+
+      // فلترة القسم
+      if (filterDepartment !== 'all' && task.department !== filterDepartment) return false;
+
+      // فلترة النوع
+      if (filterType !== 'all' && task.type !== filterType) return false;
+
+      // فلترة التبعية
+      if (filterDependency !== 'all' && task.dependency !== filterDependency) return false;
+
+      // فلترة الأولوية
+      if (filterPriority !== 'all' && task.priority !== filterPriority) return false;
+
+      // فلترة المسند إليه
+      if (filterAssignee === 'unassigned' && task.assigneeId) return false;
+      if (filterAssignee !== 'all' && filterAssignee !== 'unassigned' && task.assigneeId !== filterAssignee) return false;
+
+      return true;
+    });
+  }, [tasks, searchQuery, filterDepartment, filterType, filterDependency, filterPriority, filterAssignee]);
+
   // تجميع المهام حسب الحالة
   const tasksByStatus = columns.reduce((acc, column) => {
-    acc[column.id] = tasks.filter((task) => task.status === column.id);
+    acc[column.id] = filteredTasks.filter((task) => task.status === column.id);
     return acc;
   }, {} as Record<TaskStatus, Task[]>);
 
+  // عدد الفلاتر النشطة
+  const activeFiltersCount = [
+    filterDepartment !== 'all',
+    filterType !== 'all',
+    filterDependency !== 'all',
+    filterPriority !== 'all',
+    filterAssignee !== 'all',
+  ].filter(Boolean).length;
+
+  // إعادة تعيين الفلاتر
+  const resetFilters = () => {
+    setSearchQuery('');
+    setFilterDepartment('all');
+    setFilterType('all');
+    setFilterDependency('all');
+    setFilterPriority('all');
+    setFilterAssignee('all');
+  };
+
   // بدء السحب
   const handleDragStart = (event: DragStartEvent) => {
-    const task = tasks.find((t) => t.id === event.active.id);
+    const task = filteredTasks.find((t) => t.id === event.active.id);
     if (task) setActiveTask(task);
   };
 
@@ -241,7 +327,7 @@ export default function KanbanPage() {
       const res = await fetch(`/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...task, status: newStatus }),
+        body: JSON.stringify({ status: newStatus }),
       });
 
       const data = await res.json();
@@ -265,36 +351,165 @@ export default function KanbanPage() {
   };
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-[calc(100vh-200px)]">
-        {columns.map((column) => (
-          <DroppableColumn
-            key={column.id}
-            column={column}
-            tasks={tasksByStatus[column.id] || []}
-            onTaskClick={handleTaskClick}
-          />
-        ))}
+    <div className="space-y-4">
+      {/* شريط البحث والفلاتر */}
+      <div className="flex flex-col gap-3">
+        {/* البحث وزر الفلاتر */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="بحث في المهام..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-9"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className={showFilters ? 'bg-primary/10' : ''}
+          >
+            <Filter className="h-4 w-4 ml-1" />
+            الفلاتر
+            {activeFiltersCount > 0 && (
+              <Badge variant="secondary" className="mr-1 h-5 w-5 p-0 flex items-center justify-center">
+                {activeFiltersCount}
+              </Badge>
+            )}
+          </Button>
+          {activeFiltersCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetFilters}
+            >
+              <X className="h-4 w-4 ml-1" />
+              مسح
+            </Button>
+          )}
+        </div>
+
+        {/* لوحة الفلاتر */}
+        {showFilters && (
+          <div className="flex flex-wrap items-center gap-3 p-3 bg-muted/50 rounded-lg">
+            {/* فلتر القسم */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">القسم:</span>
+              <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+                <SelectTrigger className="w-[130px] h-8">
+                  <SelectValue placeholder="الكل" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">الكل</SelectItem>
+                  {Object.entries(departmentLabels).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* فلتر النوع */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">النوع:</span>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-[130px] h-8">
+                  <SelectValue placeholder="الكل" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">الكل</SelectItem>
+                  {Object.entries(taskTypeLabels).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* فلتر التبعية */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">التبعية:</span>
+              <Select value={filterDependency} onValueChange={setFilterDependency}>
+                <SelectTrigger className="w-[140px] h-8">
+                  <SelectValue placeholder="الكل" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">الكل</SelectItem>
+                  {Object.entries(dependencyLabels).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* فلتر الأولوية */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">الأولوية:</span>
+              <Select value={filterPriority} onValueChange={setFilterPriority}>
+                <SelectTrigger className="w-[120px] h-8">
+                  <SelectValue placeholder="الكل" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">الكل</SelectItem>
+                  {Object.entries(priorityLabels).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* فلتر المسند إليه */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">المسند إليه:</span>
+              <Select value={filterAssignee} onValueChange={setFilterAssignee}>
+                <SelectTrigger className="w-[150px] h-8">
+                  <SelectValue placeholder="الكل" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">الكل</SelectItem>
+                  <SelectItem value="unassigned">غير مسند</SelectItem>
+                  {activeUsers.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* عنصر السحب */}
-      <DragOverlay>
-        {activeTask ? (
-          <Card className="w-[280px] shadow-xl rotate-3">
-            <CardContent className="p-3">
-              <h4 className="font-medium text-sm">{activeTask.title}</h4>
-              <p className="text-xs text-muted-foreground mt-1">
-                {departmentLabels[activeTask.department]}
-              </p>
-            </CardContent>
-          </Card>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+      {/* لوحة الكانبان */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-[calc(100vh-280px)]">
+          {columns.map((column) => (
+            <DroppableColumn
+              key={column.id}
+              column={column}
+              tasks={tasksByStatus[column.id] || []}
+              onTaskClick={handleTaskClick}
+            />
+          ))}
+        </div>
+
+        {/* عنصر السحب */}
+        <DragOverlay>
+          {activeTask ? (
+            <Card className="w-[280px] shadow-xl rotate-3">
+              <CardContent className="p-3">
+                <h4 className="font-medium text-sm">{activeTask.title}</h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {departmentLabels[activeTask.department]}
+                </p>
+              </CardContent>
+            </Card>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+    </div>
   );
 }
