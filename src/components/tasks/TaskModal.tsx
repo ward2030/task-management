@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useStore, departmentLabels, priorityLabels, statusLabels, type Task, type Priority, type TaskStatus, type Department, type Comment, type TaskRating } from '@/store/useStore';
+import { useStore, departmentLabels, priorityLabels, statusLabels, taskTypeLabels, dependencyLabels, type Task, type Priority, type TaskStatus, type Department, type TaskType, type Dependency, type Comment, type TaskRating } from '@/store/useStore';
 import {
   Dialog,
   DialogContent,
@@ -53,6 +53,8 @@ export default function TaskModal({ open, onOpenChange, task }: TaskModalProps) 
     status: 'TODO' as TaskStatus,
     priority: 'MEDIUM' as Priority,
     department: 'ARCHITECTURAL' as Department,
+    type: 'PLANS' as TaskType,
+    dependency: 'TECHNICAL_OFFICE' as Dependency,
     dueDate: '',
     assigneeId: '',
   });
@@ -66,6 +68,8 @@ export default function TaskModal({ open, onOpenChange, task }: TaskModalProps) 
         status: task.status,
         priority: task.priority,
         department: task.department,
+        type: task.type || 'PLANS',
+        dependency: task.dependency || 'TECHNICAL_OFFICE',
         dueDate: task.dueDate ? format(new Date(task.dueDate), 'yyyy-MM-dd') : '',
         assigneeId: task.assigneeId || '',
       });
@@ -87,6 +91,8 @@ export default function TaskModal({ open, onOpenChange, task }: TaskModalProps) 
         status: 'TODO',
         priority: 'MEDIUM',
         department: 'ARCHITECTURAL',
+        type: 'PLANS',
+        dependency: 'TECHNICAL_OFFICE',
         dueDate: '',
         assigneeId: '',
       });
@@ -395,6 +401,46 @@ export default function TaskModal({ open, onOpenChange, task }: TaskModalProps) 
                   </SelectTrigger>
                   <SelectContent>
                     {Object.entries(departmentLabels).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>النوع</Label>
+                <Select
+                  value={formData.type}
+                  onValueChange={(value) => setFormData({ ...formData, type: value as TaskType })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(taskTypeLabels).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>التبعية</Label>
+                <Select
+                  value={formData.dependency}
+                  onValueChange={(value) => setFormData({ ...formData, dependency: value as Dependency })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(dependencyLabels).map(([key, label]) => (
                       <SelectItem key={key} value={key}>
                         {label}
                       </SelectItem>
