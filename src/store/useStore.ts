@@ -5,6 +5,8 @@ export type Role = 'ADMIN' | 'COORDINATOR' | 'DEPARTMENT_MANAGER' | 'EMPLOYEE';
 export type Department = 'ARCHITECTURAL' | 'ELECTRICAL' | 'CIVIL' | 'MECHANICAL';
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'DONE';
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+export type TaskType = 'PLANS' | 'MATERIALS' | 'CONTRACTS';
+export type Dependency = 'TECHNICAL_OFFICE' | 'SITE';
 
 export interface User {
   id: string;
@@ -35,6 +37,8 @@ export interface Task {
   status: TaskStatus;
   priority: Priority;
   department: Department;
+  type?: TaskType | null;
+  dependency?: Dependency | null;
   dueDate?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -226,6 +230,32 @@ export const statusColors: Record<TaskStatus, string> = {
   IN_PROGRESS: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
   IN_REVIEW: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
   DONE: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+};
+
+// ترجمات أنواع المهام
+export const taskTypeLabels: Record<TaskType, string> = {
+  PLANS: 'مخططات',
+  MATERIALS: 'مواد',
+  CONTRACTS: 'عقود',
+};
+
+// ألوان أنواع المهام
+export const taskTypeColors: Record<TaskType, string> = {
+  PLANS: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+  MATERIALS: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
+  CONTRACTS: 'bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-300',
+};
+
+// ترجمات التبعية
+export const dependencyLabels: Record<Dependency, string> = {
+  TECHNICAL_OFFICE: 'المكتب الفني',
+  SITE: 'الموقع',
+};
+
+// ألوان التبعية
+export const dependencyColors: Record<Dependency, string> = {
+  TECHNICAL_OFFICE: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300',
+  SITE: 'bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300',
 };
 
 // ترجمات أنواع النشاط
