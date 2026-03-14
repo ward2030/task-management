@@ -42,6 +42,19 @@ enum Priority {
   URGENT // عاجلة
 }
 
+// نوع المهمة
+enum TaskType {
+  PLANS     // مخططات
+  MATERIALS // مواد
+  CONTRACTS // عقود
+}
+
+// التبعية
+enum Dependency {
+  TECHNICAL_OFFICE // المكتب الفني
+  SITE             // الموقع
+}
+
 // المستخدمين
 model User {
   id           String   @id @default(cuid())
@@ -77,6 +90,8 @@ model Task {
   status       TaskStatus @default(TODO)
   priority     Priority   @default(MEDIUM)
   department   Department
+  type         TaskType?  @default(PLANS)     // نوع المهمة
+  dependency   Dependency? @default(TECHNICAL_OFFICE) // التبعية
   dueDate      DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
